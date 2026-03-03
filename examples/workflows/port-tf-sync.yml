@@ -1,0 +1,73 @@
+# Port Terraform Sync Workflow
+# This workflow automatically applies Terraform changes to Port.io when
+# changes are merged to the main branch or manually triggered.
+#
+# Prerequisites:
+# - PORT_CLIENT_ID secret (from Port API credentials)
+# - PORT_CLIENT_SECRET secret (from Port API credentials)
+# - Terraform Cloud organization and workspace configured
+
+name: Port Terraform Sync
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "terraform/port/**"
+  workflow_dispatch:
+
+jobs:
+  terraform-plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.0
+
+      - name: Terraform Init
+        working-directory: terraform/port
+        run: terraform init
+        env:
+          TF_VAR_port_client_id: ${{ secrets.PORT_CLIENT_ID }}
+          TF_VAR_port_client_secret: ${{ secrets.PORT_CLIENT_SECRET }}
+
+      - name: Terraform Plan
+        working-directory: terraform/port
+        run: terraform plan -no-color
+        env:
+          TF_VAR_port_client_id: ${{ secrets.PORT_CLIENT_ID }}
+          TF_VAR_port_client_secret: ${{ secrets.PORT_CLIENT_SECRET }}
+
+  terraform-apply:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.0
+
+      - name: Terraform Init
+        working-directory: terraform/port
+        run: terraform init
+        env:
+          TF_VAR_port_client_id: ${{ secrets.PORT_CLIENT_ID }}
+          TF_VAR_port_client_secret: ${{ secrets.PORT_CLIENT_SECRET }}
+
+      - name: Terraform Apply
+        working-directory: terraform/port
+        run: terraform apply -auto-approve
+        env:
+          TF_VAR_port_client_id: ${{ secrets.PORT_CLIENT_ID }}
+          TF_VAR_port_client_secret: ${{ secrets.PORT_CLIENT_SECRET }}

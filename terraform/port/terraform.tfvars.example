@@ -1,0 +1,31 @@
+# Example Terraform Variables
+# Copy this file to terraform.tfvars and fill in your values
+# NOTE: terraform.tfvars is gitignored - never commit secrets!
+
+# Port.io API credentials (required)
+# Get these from: https://app.getport.io -> Settings -> API Credentials
+port_client_id     = "your_port_client_id_here"
+port_client_secret = "your_port_client_secret_here"
+
+# GitHub organization (required)
+github_org = "Acme-Corp"
+
+# Repository names (defaults shown)
+api_repo   = "api"
+infra_repo = "acme-infra"
+
+# Service URLs (optional - customize for your environment)
+api_docs_url         = "https://api.example.com/docs"
+frontend_vercel_url  = "https://app.example.com"
+landing_vercel_url   = "https://www.example.com"
+
+# Sentry project slugs (optional)
+api_sentry_project      = "acme-api"
+frontend_sentry_project = "acme-frontend"
+
+# Integration entity IDs (optional)
+# These link your Port service entities to Railway/Vercel entities
+# Find these in Port after setting up Railway/Vercel integrations
+# api_railway_service_id      = "railway-service-id-from-port"
+# frontend_vercel_project_id  = "vercel-project-id-from-port"
+# landing_vercel_project_id   = "vercel-project-id-from-port"

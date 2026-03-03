@@ -1,0 +1,5 @@
+{
+  "service_name": "my-service",
+  "service_description": "A new Acme Corp microservice",
+  "port_entity_identifier": "{{ cookiecutter.service_name | lower | replace(' ', '-') }}"
+}

@@ -1,0 +1,152 @@
+name: Scaffold New Service
+
+on:
+  workflow_dispatch:
+    inputs:
+      service_name:
+        required: true
+        description: "Name of the new service (used as repo name, e.g. acme-notifications)"
+        type: string
+      service_description:
+        required: false
+        description: "Short description of what this service does"
+        type: string
+        default: "A new Acme Corp microservice"
+      language:
+        required: true
+        description: "Service language/stack"
+        type: choice
+        options:
+          - python-fastapi
+          - typescript-nextjs
+          - go-fiber
+        default: python-fastapi
+      port_context:
+        required: true
+        description: "Port action run context (JSON)"
+        type: string
+
+jobs:
+  scaffold:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_ORG: Acme-Corp
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract Port run ID
+        run: |
+          echo "PORT_RUN_ID=$(echo '${{ inputs.port_context }}' | jq -r .runId)" >> $GITHUB_ENV
+
+      - name: Log start
+        uses: port-labs/port-github-action@v1
+        with:
+          clientId: ${{ secrets.PORT_CLIENT_ID }}
+          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          baseUrl: https://api.getport.io
+          operation: PATCH_RUN
+          runId: ${{ env.PORT_RUN_ID }}
+          logMessage: "🚀 Scaffolding new ${{ inputs.language }} service: ${{ inputs.service_name }}"
+
+      - name: Install dependencies
+        run: |
+          # Install appropriate tooling based on language
+          # For Python: cookiecutter
+          # For TypeScript: create-next-app or similar
+          # For Go: go templates
+          pip install cookiecutter
+
+      - name: Generate service from template
+        run: |
+          cookiecutter \
+            scaffolding/templates/${{ inputs.language }} \
+            --no-input \
+            --output-dir /tmp/scaffolded \
+            service_name="${{ inputs.service_name }}" \
+            service_description="${{ inputs.service_description }}"
+
+      - name: Create GitHub repository
+        env:
+          GH_TOKEN: ${{ secrets.ORG_ADMIN_TOKEN }}
+        run: |
+          gh repo create ${{ env.GITHUB_ORG }}/${{ inputs.service_name }} \
+            --private \
+            --description "${{ inputs.service_description }}" \
+            --clone=false
+
+      - name: Push scaffolded code
+        env:
+          GH_TOKEN: ${{ secrets.ORG_ADMIN_TOKEN }}
+        run: |
+          cd /tmp/scaffolded/${{ inputs.service_name }}
+          git init
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git remote add origin https://x-access-token:${{ secrets.ORG_ADMIN_TOKEN }}@github.com/${{ env.GITHUB_ORG }}/${{ inputs.service_name }}.git
+          git add .
+          git commit -m "chore: scaffold ${{ inputs.service_name }} from ${{ inputs.language }} template"
+          git branch -M main
+          git push -u origin main
+
+      - name: Log repo created
+        uses: port-labs/port-github-action@v1
+        with:
+          clientId: ${{ secrets.PORT_CLIENT_ID }}
+          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          baseUrl: https://api.getport.io
+          operation: PATCH_RUN
+          runId: ${{ env.PORT_RUN_ID }}
+          logMessage: "✅ Repo created: https://github.com/${{ env.GITHUB_ORG }}/${{ inputs.service_name }}"
+
+      - name: Register service entity in Port
+        uses: port-labs/port-github-action@v1
+        with:
+          clientId: ${{ secrets.PORT_CLIENT_ID }}
+          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          baseUrl: https://api.getport.io
+          operation: UPSERT
+          identifier: ${{ inputs.service_name }}
+          title: ${{ inputs.service_name }}
+          blueprint: service
+          properties: |
+            {
+              "language": "${{ inputs.language == 'python-fastapi' && 'Python' || inputs.language == 'typescript-nextjs' && 'TypeScript' || 'Go' }}",
+              "description": "${{ inputs.service_description }}",
+              "repo_url": "https://github.com/${{ env.GITHUB_ORG }}/${{ inputs.service_name }}",
+              "has_ci_cd": true,
+              "has_sentry": false
+            }
+
+      - name: Log Port entity created
+        uses: port-labs/port-github-action@v1
+        with:
+          clientId: ${{ secrets.PORT_CLIENT_ID }}
+          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          baseUrl: https://api.getport.io
+          operation: PATCH_RUN
+          runId: ${{ env.PORT_RUN_ID }}
+          logMessage: "✅ Service registered in Port catalog"
+
+      - name: Mark success
+        uses: port-labs/port-github-action@v1
+        with:
+          clientId: ${{ secrets.PORT_CLIENT_ID }}
+          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          baseUrl: https://api.getport.io
+          operation: PATCH_RUN
+          runId: ${{ env.PORT_RUN_ID }}
+          status: SUCCESS
+          summary: "Service ${{ inputs.service_name }} scaffolded and registered in Port 🎉"
+
+      - name: Mark failure
+        if: failure()
+        uses: port-labs/port-github-action@v1
+        with:
+          clientId: ${{ secrets.PORT_CLIENT_ID }}
+          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          baseUrl: https://api.getport.io
+          operation: PATCH_RUN
+          runId: ${{ env.PORT_RUN_ID }}
+          status: FAILURE
+          summary: "Failed to scaffold ${{ inputs.service_name }} — check workflow logs"

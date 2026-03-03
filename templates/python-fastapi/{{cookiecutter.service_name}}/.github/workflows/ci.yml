@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh && echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Lint
+        run: uv run ruff check app/
+
+      - name: Run tests
+        run: uv run pytest
+
+      - name: Update Port coverage
+        if: github.ref == 'refs/heads/main'
+        env:
+          PORT_CLIENT_ID: ${{ "{{" }} secrets.PORT_CLIENT_ID {{ "}}" }}
+          PORT_CLIENT_SECRET: ${{ "{{" }} secrets.PORT_CLIENT_SECRET {{ "}}" }}
+        run: |
+          COVERAGE=$(grep -oP 'TOTAL.*?\K[\d.]+(?=%)' coverage.xml || echo "0")
+          TOKEN=$(curl -s -X POST https://api.getport.io/v1/auth/access_token \
+            -H "Content-Type: application/json" \
+            -d "{\"clientId\":\"$PORT_CLIENT_ID\",\"clientSecret\":\"$PORT_CLIENT_SECRET\"}" \
+            | jq -r '.accessToken')
+          curl -s -X PATCH "https://api.getport.io/v1/blueprints/service/entities/{{cookiecutter.service_name}}" \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"properties\":{\"test_coverage\":$COVERAGE}}"
