@@ -32,6 +32,9 @@ This repository demonstrates how to build a **production-ready Internal Develope
 
 Port solves the "where is everything?" problem by pulling all your infrastructure, code, and tooling into one searchable, queryable catalog.
 
+![Port Service Catalog](docs/images/port-catalog-overview.png)
+_Port.io service catalog showing blueprints, entities, and their relationships_
+
 ---
 
 ## Why Terraform for IDP Configuration?
@@ -301,6 +304,15 @@ This demo includes these self-service actions:
 4. Workflow creates repo + pushes code + registers in Port
 5. Developer gets a link to the new repo in Port
 
+![Scaffold Service Action](docs/images/scaffold-service-form.png)
+_Clicking "Scaffold New Service" in Port and filling out the form_
+
+![Workflow Execution Logs](docs/images/workflow-logs.png)
+_Real-time logs showing repo creation and Port registration_
+
+![New Service Entity](docs/images/new-service-entity.png)
+_Newly scaffolded service automatically registered in Port catalog_
+
 ### 2. **Trigger Deployment**
 
 **Trigger**: From a Service detail page (Day-2 action)  
@@ -338,6 +350,9 @@ The `templates/` directory contains [Cookiecutter](https://cookiecutter.readthed
   - Runs tests with coverage
   - Lints code with Ruff
   - Updates Port entity with latest test coverage
+
+![Generated Service Repository](docs/images/generated-service-repo.png)
+_Newly generated Python FastAPI service repository from template_
 
 ### Template Structure
 
@@ -426,6 +441,9 @@ Services are evaluated against 3 levels:
 - Has on-call runbook
 - 80%+ test coverage
 
+![Production Readiness Scorecard](docs/images/scorecard-example.png)
+_Service detail page showing Gold level Production Readiness score_
+
 Scorecard rules use **Port's query language** to evaluate properties:
 
 ```hcl
@@ -503,8 +521,6 @@ Workflows report status back to Port using the **port-github-action**:
     status: SUCCESS
     summary: "Service scaffolded successfully 🎉"
 ```
-
-Developers see real-time logs in the Port UI.
 
 ---
 
@@ -589,10 +605,9 @@ service_name = {
 
 ### Example Integrations
 
-- **GitHub Ocean Integration**: [GitHub Integration Docs](https://docs.getport.io/build-your-software-catalog/sync-data-to-catalog/git/github)
-- **Railway Integration**: [Railway Integration Docs](https://docs.getport.io/build-your-software-catalog/sync-data-to-catalog/cloud-providers/railway)
-- **Vercel Integration**: [Vercel Integration Docs](https://docs.getport.io/build-your-software-catalog/sync-data-to-catalog/hosting-providers/vercel)
-- **SonarQube Integration**: [SonarQube Integration Docs](https://docs.getport.io/build-your-software-catalog/sync-data-to-catalog/code-quality/sonarqube)
+- **GitHub Ocean Integration**: [GitHub Integration Docs](https://docs.port.io/build-your-software-catalog/sync-data-to-catalog/git/github-ocean/)
+- **Vercel Integration**: [Vercel Integration Docs](https://docs.getport.io/build-your-software-catalog/sync-data-to-catalog/hosting-providers/vercel) (PR Pending)
+- **SonarQube Integration**: [SonarQube Integration Docs](https://docs.port.io/build-your-software-catalog/sync-data-to-catalog/code-quality-security/sonarqube/)
 
 ### Blog Posts & Tutorials
 
