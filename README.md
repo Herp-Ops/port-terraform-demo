@@ -255,6 +255,48 @@ export TF_VAR_port_client_id="your_client_id"
 export TF_VAR_port_client_secret="your_client_secret"
 ```
 
+### Using a Secrets Manager (Doppler, 1Password, Vault, etc.)
+
+**Best Practice:** Avoid writing secrets like API keys or client secrets in plain text files (such as `terraform.tfvars`) or as environment variables in your shell history. Use a dedicated secrets manager (like [Doppler](https://www.doppler.com/), [1Password](https://developer.1password.com/docs/secrets/), [HashiCorp Vault](https://www.vaultproject.io/), [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/), etc.) to securely inject these values into your CI/CD workflows or Terraform commands.
+
+#### Example: Using Doppler
+
+1. [Install Doppler CLI](https://docs.doppler.com/docs/install-cli)
+2. Authenticate your session and select the workspace:
+
+   ```bash
+   doppler login
+   doppler setup
+   ```
+
+3. Run Terraform with secrets injected as environment variables:
+
+   ```bash
+   doppler run -- terraform apply
+   ```
+
+   This automatically injects variables like `TF_VAR_port_client_id` and `TF_VAR_port_client_secret` from Doppler into Terraform **without ever storing them in source code or environment files**.
+
+#### Example: Using 1Password
+
+If you use [1Password CLI](https://developer.1password.com/docs/cli/):
+
+```bash
+export TF_VAR_port_client_id=$(op read "op://Project/Port Client ID")
+export TF_VAR_port_client_secret=$(op read "op://Project/Port Client Secret")
+terraform apply
+```
+
+#### General Pattern
+
+Most secrets managers let you inject env vars at runtime for CI/CD or your local session. Configure your secrets manager to provide:
+
+- `TF_VAR_port_client_id`
+- `TF_VAR_port_client_secret`
+- Any other sensitive variables needed for Terraform
+
+> **Tip:** Review your secrets manager's documentation for best practices integrating with Terraform or CI platforms.
+
 ### 5. Initialize and Apply
 
 ```bash
